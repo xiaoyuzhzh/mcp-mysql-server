@@ -1,11 +1,11 @@
-# @modelcontextprotocol/server-mysql
+# @f4ww4z/mcp-mysql-server
 
 A Model Context Protocol server that provides MySQL database operations. This server enables AI models to interact with MySQL databases through a standardized interface.
 
 ## Installation
 
 ```bash
-npx @modelcontextprotocol/server-mysql
+npx @f4ww4z/mcp-mysql-server
 ```
 
 ## Configuration
@@ -17,7 +17,7 @@ The server requires the following environment variables to be set in your MCP se
   "mcpServers": {
     "mysql": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-mysql"],
+      "args": ["-y", "@f4ww4z/mcp-mysql-server"],
       "env": {
         "MYSQL_HOST": "your_host",
         "MYSQL_USER": "your_user",
@@ -124,7 +124,7 @@ The server provides detailed error messages for common issues:
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request to https://github.com/f4ww4z/mcp-mysql-server
 
 ## License
 
