@@ -2,6 +2,8 @@
 
 A Model Context Protocol server that provides MySQL database operations. This server enables AI models to interact with MySQL databases through a standardized interface.
 
+<a href="https://glama.ai/mcp/servers/qma33al6ie"><img width="380" height="200" src="https://glama.ai/mcp/servers/qma33al6ie/badge" alt="mcp-mysql-server MCP server" /></a>
+
 ## Installation
 
 ```bash
