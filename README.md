@@ -1,4 +1,5 @@
 # @f4ww4z/mcp-mysql-server
+[![smithery badge](https://smithery.ai/badge/@f4ww4z/mcp-mysql-server)](https://smithery.ai/server/@f4ww4z/mcp-mysql-server)
 
 A Model Context Protocol server that provides MySQL database operations. This server enables AI models to interact with MySQL databases through a standardized interface.
 
@@ -6,6 +7,15 @@ A Model Context Protocol server that provides MySQL database operations. This se
 
 ## Installation
 
+### Installing via Smithery
+
+To install MySQL Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@f4ww4z/mcp-mysql-server):
+
+```bash
+npx -y @smithery/cli install @f4ww4z/mcp-mysql-server --client claude
+```
+
+### Manual Installation
 ```bash
 npx @f4ww4z/mcp-mysql-server
 ```
