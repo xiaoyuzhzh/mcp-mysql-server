@@ -57,8 +57,22 @@ class MySQLServer {
       }
     );
 
+    if (!process.env.MYSQL_HOST
+      && !process.env.MYSQL_USER
+      && process.env.MYSQL_PASSWORD !== undefined
+      && process.env.MYSQL_PASSWORD !== null
+      && !process.env.MYSQL_DATABASE) {
+      this.config = {
+        host: process.env.MYSQL_HOST as string,
+        user: process.env.MYSQL_USER as string,
+        password: process.env.MYSQL_PASSWORD as string,
+        database: process.env.MYSQL_DATABASE as string,
+        port: Number(process.env.MYSQL_PORT ?? 3306),
+      };
+    }
+
     this.setupToolHandlers();
-    
+
     // Error handling
     this.server.onerror = (error) => console.error('[MCP Error]', error);
     process.on('SIGINT', async () => {
@@ -217,11 +231,13 @@ class MySQLServer {
   }
 
   private async handleConnectDb(args: any) {
-    if (!args.host || !args.user || !args.password || !args.database) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        'Missing required database configuration parameters'
-      );
+    if (this.config === null) {
+      if (!args.host || !args.user || args.password === undefined || args.password === null || !args.database) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          'Missing required database configuration parameters'
+        );
+      }
     }
 
     // Close existing connection if any
