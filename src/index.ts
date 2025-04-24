@@ -8,10 +8,13 @@ import {
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import * as mysql from 'mysql2/promise';
-import { config } from 'dotenv';
+// import { config } from 'dotenv';
+import { URL } from 'url';
 
-// Load environment variables
-config();
+// // Load environment variables
+// config();
+
+
 
 interface DatabaseConfig {
   host: string;
@@ -39,6 +42,29 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
+// Add parseMySQLUrl function after DatabaseConfig interface
+function parseMySQLUrl(url: string): DatabaseConfig {
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol !== 'mysql:') {
+      throw new Error('Invalid MySQL URL protocol');
+    }
+
+    return {
+      host: parsedUrl.hostname,
+      user: parsedUrl.username || '',
+      password: parsedUrl.password || '',
+      database: parsedUrl.pathname.slice(1), // remove leading '/'
+      port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : 3306,
+    };
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(`Invalid MySQL URL: ${error.message}`);
+    }
+    throw new Error('Invalid MySQL URL: Unknown error');
+  }
+}
+
 class MySQLServer {
   private server: Server;
   private connection: mysql.Connection | null = null;
@@ -57,18 +83,34 @@ class MySQLServer {
       }
     );
 
-    if (!process.env.MYSQL_HOST
-      && !process.env.MYSQL_USER
-      && process.env.MYSQL_PASSWORD !== undefined
-      && process.env.MYSQL_PASSWORD !== null
-      && !process.env.MYSQL_DATABASE) {
+    // Get database URL from command line arguments
+    const args = process.argv.slice(2);
+    if (args.length > 0) {
+      try {
+        const databaseUrl = args[0];
+        this.config = parseMySQLUrl(databaseUrl);
+
+      } catch (error: unknown) {
+        console.error('Error parsing database URL:', error instanceof Error ? error.message : 'Unknown error');
+        process.exit(1);
+      }
+    }
+    
+    if (process.env.MYSQL_HOST && process.env.MYSQL_USER && process.env.MYSQL_PASSWORD && process.env.MYSQL_DATABASE) {
+      // Fallback to environment variables if no command line argument is provided
       this.config = {
-        host: process.env.MYSQL_HOST as string,
-        user: process.env.MYSQL_USER as string,
-        password: process.env.MYSQL_PASSWORD as string,
-        database: process.env.MYSQL_DATABASE as string,
+        host: process.env.MYSQL_HOST,
+        user: process.env.MYSQL_USER,
+        password: process.env.MYSQL_PASSWORD,
+        database: process.env.MYSQL_DATABASE,
         port: Number(process.env.MYSQL_PORT ?? 3306),
       };
+    }
+
+    if (!this.config) {
+      console.error('No database configuration provided. Please provide a MySQL URL as a command line argument');
+      console.error('Example: node xxx.js mysql://user:password@localhost:3306/mydb');
+      process.exit(1);
     }
 
     this.setupToolHandlers();
@@ -231,13 +273,41 @@ class MySQLServer {
   }
 
   private async handleConnectDb(args: any) {
-    if (this.config === null) {
+    let newConfig: DatabaseConfig | null = null;
+
+    // Try to parse from url first
+    if (args.url) {
+      try {
+        newConfig = parseMySQLUrl(args.url);
+      } catch (error: unknown) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          `Invalid MySQL URL: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+    } else if (args.host || args.user || args.password || args.database) {
+      // Fall back to individual parameters
       if (!args.host || !args.user || args.password === undefined || args.password === null || !args.database) {
         throw new McpError(
           ErrorCode.InvalidParams,
           'Missing required database configuration parameters'
         );
       }
+      newConfig = {
+        host: args.host,
+        user: args.user,
+        password: args.password,
+        database: args.database,
+        port: args.port,
+      };
+    }
+
+    // If no new config provided, use existing config from env
+    if (!newConfig && !this.config) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        'No database configuration provided'
+      );
     }
 
     // Close existing connection if any
@@ -246,13 +316,10 @@ class MySQLServer {
       this.connection = null;
     }
 
-    this.config = {
-      host: args.host,
-      user: args.user,
-      password: args.password,
-      database: args.database,
-      port: args.port,
-    };
+    // Update config if new config provided
+    if (newConfig) {
+      this.config = newConfig;
+    }
 
     try {
       await this.ensureConnection();

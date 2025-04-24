@@ -24,6 +24,19 @@ npx @f4ww4z/mcp-mysql-server
 
 The server requires the following environment variables to be set in your MCP settings configuration file:
 
+> recommended use
+
+```json
+{
+  "mcpServers": {
+    "mysql": {
+      "command": "npx",
+      "args": ["-y", "@f4ww4z/mcp-mysql-server", "mysql://user:password@localhost:port/database"],
+    }
+  }
+}
+```
+
 ```json
 {
   "mcpServers": {
