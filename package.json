@@ -28,6 +28,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.6.0",
     "dotenv": "^16.4.7",
+    "mcp-evals": "^1.0.18",
     "mysql2": "^3.11.5"
   },
   "devDependencies": {
