@@ -155,7 +155,7 @@ class MySQLServer {
       tools: [
         {
           name: 'connect_db',
-          description: 'Connect to MySQL database',
+          description: 'Switch to a different MySQL database connection. Only use this if you need to connect to a different database than the one configured at startup.',
           inputSchema: {
             type: 'object',
             properties: {
