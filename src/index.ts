@@ -52,8 +52,8 @@ function parseMySQLUrl(url: string): DatabaseConfig {
 
     return {
       host: parsedUrl.hostname,
-      user: parsedUrl.username || '',
-      password: parsedUrl.password || '',
+      user: decodeURIComponent(parsedUrl.username || ''),
+      password: decodeURIComponent(parsedUrl.password || ''),
       database: parsedUrl.pathname.slice(1), // remove leading '/'
       port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : 3306,
     };
