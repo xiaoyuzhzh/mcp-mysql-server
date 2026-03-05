@@ -1,164 +1,102 @@
-# @f4ww4z/mcp-mysql-server
-[![smithery badge](https://smithery.ai/badge/@f4ww4z/mcp-mysql-server)](https://smithery.ai/server/@f4ww4z/mcp-mysql-server)
+# @xiaoyuzhzh/mcp-mysql-server
 
 A Model Context Protocol server that provides MySQL database operations. This server enables AI models to interact with MySQL databases through a standardized interface.
 
-<a href="https://glama.ai/mcp/servers/qma33al6ie"><img width="380" height="200" src="https://glama.ai/mcp/servers/qma33al6ie/badge" alt="mcp-mysql-server MCP server" /></a>
-
 ## Installation
 
-### Installing via Smithery
-
-To install MySQL Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@f4ww4z/mcp-mysql-server):
-
 ```bash
-npx -y @smithery/cli install @f4ww4z/mcp-mysql-server --client claude
-```
-
-### Manual Installation
-```bash
-npx @f4ww4z/mcp-mysql-server
+npx -y @xiaoyuzhzh/mcp-mysql-server
 ```
 
 ## Configuration
 
-The server requires the following environment variables to be set in your MCP settings configuration file:
+The server supports two configuration methods (by priority):
 
-> recommended use
+### 1. Connection URL (recommended)
 
 ```json
 {
   "mcpServers": {
     "mysql": {
       "command": "npx",
-      "args": ["-y", "@f4ww4z/mcp-mysql-server", "mysql://user:password@localhost:port/database"],
+      "args": ["-y", "@xiaoyuzhzh/mcp-mysql-server", "mysql://user:password@localhost:3306/database"]
     }
   }
 }
 ```
 
+URL supports encoded credentials, e.g. passwords with special characters.
+
+### 2. Environment Variables
+
 ```json
 {
   "mcpServers": {
     "mysql": {
       "command": "npx",
-      "args": ["-y", "@f4ww4z/mcp-mysql-server"],
+      "args": ["-y", "@xiaoyuzhzh/mcp-mysql-server"],
       "env": {
         "MYSQL_HOST": "your_host",
         "MYSQL_USER": "your_user",
         "MYSQL_PASSWORD": "your_password",
-        "MYSQL_DATABASE": "your_database"
+        "MYSQL_DATABASE": "your_database",
+        "MYSQL_PORT": "3306"
       }
     }
   }
 }
 ```
 
-
-
-## Running evals
-
-The evals package loads an mcp client that then runs the index.ts file, so there is no need to rebuild between tests. You can load environment variables by prefixing the npx command. Full documentation can be found [here](https://www.mcpevals.io/docs).
-
-```bash
-OPENAI_API_KEY=your-key  npx mcp-eval src/evals/evals.ts src/index.ts
-```
 ## Available Tools
 
-### 1. connect_db
-Establish connection to MySQL database using provided credentials.
+### connect_db
+Switch to a different database connection. Only use when you need to change databases — the connection is established automatically at startup.
 
-```typescript
-use_mcp_tool({
-  server_name: "mysql",
-  tool_name: "connect_db",
-  arguments: {
-    host: "localhost",
-    user: "your_user",
-    password: "your_password",
-    database: "your_database"
-  }
-});
-```
-
-### 2. query
+### query
 Execute SELECT queries with optional prepared statement parameters.
 
 ```typescript
-use_mcp_tool({
-  server_name: "mysql",
-  tool_name: "query",
-  arguments: {
-    sql: "SELECT * FROM users WHERE id = ?",
-    params: [1]
-  }
-});
+{
+  sql: "SELECT * FROM users WHERE id = ?",
+  params: [1]
+}
 ```
 
-### 3. execute
+### execute
 Execute INSERT, UPDATE, or DELETE queries with optional prepared statement parameters.
 
 ```typescript
-use_mcp_tool({
-  server_name: "mysql",
-  tool_name: "execute",
-  arguments: {
-    sql: "INSERT INTO users (name, email) VALUES (?, ?)",
-    params: ["John Doe", "john@example.com"]
-  }
-});
+{
+  sql: "INSERT INTO users (name, email) VALUES (?, ?)",
+  params: ["John Doe", "john@example.com"]
+}
 ```
 
-### 4. list_tables
+### list_tables
 List all tables in the connected database.
 
-```typescript
-use_mcp_tool({
-  server_name: "mysql",
-  tool_name: "list_tables",
-  arguments: {}
-});
-```
-
-### 5. describe_table
+### describe_table
 Get the structure of a specific table.
 
 ```typescript
-use_mcp_tool({
-  server_name: "mysql",
-  tool_name: "describe_table",
-  arguments: {
-    table: "users"
-  }
-});
+{
+  table: "users"
+}
 ```
 
 ## Features
 
+- Automatic connection at startup, no need to call connect_db first
 - Secure connection handling with automatic cleanup
-- Prepared statement support for query parameters
+- Prepared statement support to prevent SQL injection
+- URL-encoded credentials support
 - Comprehensive error handling and validation
-- TypeScript support
-- Automatic connection management
 
-## Security
+## Running Evals
 
-- Uses prepared statements to prevent SQL injection
-- Supports secure password handling through environment variables
-- Validates queries before execution
-- Automatically closes connections when done
-
-## Error Handling
-
-The server provides detailed error messages for common issues:
-- Connection failures
-- Invalid queries
-- Missing parameters
-- Database errors
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request to https://github.com/f4ww4z/mcp-mysql-server
+```bash
+OPENAI_API_KEY=your-key npx mcp-eval src/evals/evals.ts src/index.ts
+```
 
 ## License
 

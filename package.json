@@ -1,10 +1,10 @@
 {
   "name": "@xiaoyuzhzh/mcp-mysql-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Model Context Protocol server for MySQL database operations",
   "type": "module",
   "bin": {
-    "mcp-mysql": "./build/index.js"
+    "mcp-mysql-server": "./build/index.js"
   },
   "files": [
     "build"
