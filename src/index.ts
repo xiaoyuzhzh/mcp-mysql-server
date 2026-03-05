@@ -124,8 +124,12 @@ class MySQLServer {
   }
 
   private async cleanup() {
-    if (this.connection) {
-      await this.connection.end();
+    try {
+      if (this.connection) {
+        await this.connection.end();
+      }
+    } catch {
+      // connection may already be closed
     }
     await this.server.close();
   }
@@ -185,13 +189,13 @@ class MySQLServer {
         },
         {
           name: 'query',
-          description: 'Execute a SELECT query',
+          description: 'Execute a read-only SQL query. Supports SELECT, SHOW, DESCRIBE, DESC, EXPLAIN and other read-only statements. Use this for any query that does not modify data.',
           inputSchema: {
             type: 'object',
             properties: {
               sql: {
                 type: 'string',
-                description: 'SQL SELECT query',
+                description: 'Read-only SQL query (SELECT, SHOW, DESCRIBE, EXPLAIN, etc.)',
               },
               params: {
                 type: 'array',
@@ -206,13 +210,13 @@ class MySQLServer {
         },
         {
           name: 'execute',
-          description: 'Execute an INSERT, UPDATE, or DELETE query',
+          description: 'Execute a write SQL query that modifies data or schema. Supports INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, TRUNCATE and other write statements.',
           inputSchema: {
             type: 'object',
             properties: {
               sql: {
                 type: 'string',
-                description: 'SQL query (INSERT, UPDATE, DELETE)',
+                description: 'Write SQL query (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, etc.)',
               },
               params: {
                 type: 'array',
@@ -223,29 +227,6 @@ class MySQLServer {
               },
             },
             required: ['sql'],
-          },
-        },
-        {
-          name: 'list_tables',
-          description: 'List all tables in the database',
-          inputSchema: {
-            type: 'object',
-            properties: {},
-            required: [],
-          },
-        },
-        {
-          name: 'describe_table',
-          description: 'Get table structure',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              table: {
-                type: 'string',
-                description: 'Table name',
-              },
-            },
-            required: ['table'],
           },
         },
       ],
@@ -259,10 +240,6 @@ class MySQLServer {
           return await this.handleQuery(request.params.arguments);
         case 'execute':
           return await this.handleExecute(request.params.arguments);
-        case 'list_tables':
-          return await this.handleListTables();
-        case 'describe_table':
-          return await this.handleDescribeTable(request.params.arguments);
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,
@@ -339,6 +316,9 @@ class MySQLServer {
     }
   }
 
+  private static readonly READONLY_PREFIXES = ['SELECT', 'SHOW', 'DESCRIBE', 'DESC', 'EXPLAIN'];
+  private static readonly WRITE_PREFIXES = ['INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP', 'TRUNCATE', 'RENAME', 'REPLACE'];
+
   private async handleQuery(args: any) {
     await this.ensureConnection();
 
@@ -346,10 +326,11 @@ class MySQLServer {
       throw new McpError(ErrorCode.InvalidParams, 'SQL query is required');
     }
 
-    if (!args.sql.trim().toUpperCase().startsWith('SELECT')) {
+    const firstWord = args.sql.trim().split(/\s/)[0].toUpperCase();
+    if (!MySQLServer.READONLY_PREFIXES.includes(firstWord)) {
       throw new McpError(
         ErrorCode.InvalidParams,
-        'Only SELECT queries are allowed with query tool'
+        `Only read-only queries are allowed (${MySQLServer.READONLY_PREFIXES.join(', ')}). Use the execute tool for write operations.`
       );
     }
 
@@ -378,11 +359,17 @@ class MySQLServer {
       throw new McpError(ErrorCode.InvalidParams, 'SQL query is required');
     }
 
-    const sql = args.sql.trim().toUpperCase();
-    if (sql.startsWith('SELECT')) {
+    const firstWord = args.sql.trim().split(/\s/)[0].toUpperCase();
+    if (MySQLServer.READONLY_PREFIXES.includes(firstWord)) {
       throw new McpError(
         ErrorCode.InvalidParams,
-        'Use query tool for SELECT statements'
+        `Read-only queries are not allowed with execute tool. Use the query tool for ${firstWord} statements.`
+      );
+    }
+    if (!MySQLServer.WRITE_PREFIXES.includes(firstWord)) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Unsupported statement: ${firstWord}. Allowed write operations: ${MySQLServer.WRITE_PREFIXES.join(', ')}`
       );
     }
 
@@ -400,52 +387,6 @@ class MySQLServer {
       throw new McpError(
         ErrorCode.InternalError,
         `Query execution failed: ${getErrorMessage(error)}`
-      );
-    }
-  }
-
-  private async handleListTables() {
-    await this.ensureConnection();
-
-    try {
-      const [rows] = await this.connection!.query('SHOW TABLES');
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(rows, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to list tables: ${getErrorMessage(error)}`
-      );
-    }
-  }
-
-  private async handleDescribeTable(args: any) {
-    await this.ensureConnection();
-
-    if (!args.table) {
-      throw new McpError(ErrorCode.InvalidParams, 'Table name is required');
-    }
-
-    try {
-      const [rows] = await this.connection!.query('DESCRIBE ??', [args.table]);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(rows, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to describe table: ${getErrorMessage(error)}`
       );
     }
   }
