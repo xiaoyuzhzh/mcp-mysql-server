@@ -1,6 +1,6 @@
 {
   "name": "@xiaoyuzhzh/mcp-mysql-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A Model Context Protocol server for MySQL database operations",
   "type": "module",
   "bin": {
@@ -27,7 +27,7 @@
   "author": "xiaoyuzhzh",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.6.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "dotenv": "^16.4.7",
     "mcp-evals": "^1.0.18",
     "mysql2": "^3.11.5"
