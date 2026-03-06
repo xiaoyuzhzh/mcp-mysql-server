@@ -53,9 +53,9 @@ URL supports encoded credentials, e.g. passwords with special characters.
 Switch to a different database connection. Only use when you need to change databases — the connection is established automatically at startup.
 
 ### query
-Execute SELECT queries with optional prepared statement parameters.
+Execute read-only SQL queries. Supports SELECT, SHOW, DESCRIBE, DESC, EXPLAIN and other read-only statements.
 
-```typescript
+```json5
 {
   sql: "SELECT * FROM users WHERE id = ?",
   params: [1]
@@ -63,24 +63,12 @@ Execute SELECT queries with optional prepared statement parameters.
 ```
 
 ### execute
-Execute INSERT, UPDATE, or DELETE queries with optional prepared statement parameters.
+Execute write SQL queries that modify data or schema. Supports INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, TRUNCATE, RENAME, REPLACE statements.
 
-```typescript
+```json5
 {
   sql: "INSERT INTO users (name, email) VALUES (?, ?)",
   params: ["John Doe", "john@example.com"]
-}
-```
-
-### list_tables
-List all tables in the connected database.
-
-### describe_table
-Get the structure of a specific table.
-
-```typescript
-{
-  table: "users"
 }
 ```
 
